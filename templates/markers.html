@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionShelf - Storico Marker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen p-8">
+    <div class="max-w-5xl mx-auto">
+        
+        <!-- Intestazione e pulsante indietro -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <h1 class="text-3xl font-bold text-blue-400 text-center md:text-left">Elenco Marker</h1>
+            <div class="flex flex-wrap justify-center gap-3">
+                <a href="/" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm md:text-base text-center">
+                    Area scansione
+                </a>
+                <a href="/gestione" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm md:text-base text-center">
+                    Gestione Item
+                </a>
+                <a href="/log" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm md:text-base text-center">
+                    Log Item
+                </a>
+            </div>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 mb-8">
+            <h2 class="text-xl font-bold text-white mb-4">Cerca Posizione Marker</h2>
+            <div class="flex gap-4">
+                <input type="text" id="search-id"
+                placeholder="Inserisci il nome dell'item" 
+                class="flex-1 bg-gray-900 text-white border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-gray-500 text-lg"
+                onkeypress="if(event.key === 'Enter') cercaMarker()"
+                list="suggerimenti-oggetti"/>
+            <button onclick="cercaMarker()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-colors text-lg">
+                🔍 
+            </button>
+                <datalist id="suggerimenti-oggetti">
+                    {% for marker in markers %}
+                        {% if marker.nome %}
+                            <option value="{{ marker.nome }}">
+                        {% endif %}
+                    {% endfor %}
+                </datalist>
+            </div>
+            <!-- Qui apparirà il risultato della ricerca -->
+            <div id="search-result" class="mt-5 hidden transition-all"></div>
+        </div>
+                
+        <button onclick="spegniLuci()" class="bg-red-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition">Spegni Luci</button>
+        <!-- Griglia dei risultati -->
+        <div class="bg-gray-800 rounded-xl p-6 shadow-xl border border-gray-700">
+            {% if markers %}
+                <!-- Griglia responsive: 1 colonna su tel, 2 su tablet, 3 su PC -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for marker in markers %}
+                    <div onclick="accendiTarget({{ marker.id }}, '{{marker.nome}}', '{{marker.zona}}')" class="bg-gray-700 p-5 rounded-lg border-l-4 border-blue-500 hover:bg-gray-600 cursor-pointer active:scale-95 transition shadow-md">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-2xl font-bold text-blue-400">{{ marker.nome }} (ID: {{ marker.id }})</span>
+                            <span class="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded">
+                                X: {{ marker.x }} | Y: {{ marker.y }}
+                            </span>
+                        </div>
+                        <p class="text-gray-300 text-lg">Posizione: <strong class="text-white">{{ marker.zona }}</strong></p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-400 italic text-center py-8">
+                    Nessun marker salvato nel database. Esegui prima una scansione dalla dashboard principale!
+                </p>
+            {% endif %}
+        </div>
+        
+    </div>
+<script>
+
+    function spegniLuci(){
+        fetch('/spegni_luci', {
+            method: 'POST'
+        })
+        .then(() => {
+            console.log("spento");
+        });
+        document.getElementById('search-result').classList.add('hidden');
+    }
+
+
+    function accendiTarget(id, nome, zona) {
+        const resultDiv = document.getElementById('search-result');
+        resultDiv.innerHTML = `
+            <div class="bg-green-900 border-l-4 border-green-500 text-green-100 p-4 rounded shado>
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">✅</span>
+                    <div>
+                        <h3 class="font-bold text-lg">${nome}</h3>
+                        <p class="text-md mt-1">Il marker <strong class="text-white">ID ${id}</strong> si trova in posizione: <strong class="text-green-300 text-xl tracking-wide uppercase ml-2">${zona}</strong></p>
+                     </div>
+                     <button onclick="prelevaOggetto(${id}, '${nome}')" id="btn-preleva-${id}" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-6 rounded shadow-inner transition-colors whitespace-nowrap">
+                        Preleva Item
+                     </button>
+                 </div>
+             </div>
+        `;        
+
+
+        let datiForm = new FormData();
+        datiForm.append('id_marker', id);
+
+        fetch('/cerca_oggetto', {
+            method: 'POST',
+            body: datiForm
+        })
+        .then(response => response.text())
+        .then(testoRisposta => {
+            console.log(testoRisposta);
+        })
+        .catch(errore => {
+            console.error("Errore:", errore);
+        });
+        resultDiv.classList.remove('hidden');
+    }
+
+    function cercaMarker() {
+        const inputNome = document.getElementById('search-id').value.trim();
+        const resultDiv = document.getElementById('search-result');
+        console.log(inputNome);
+                
+        if (inputNome === "") {
+            resultDiv.innerHTML = '<p class="text-red-400">⚠️ Per favore, inserire un nome valido.</p>';
+            resultDiv.classList.remove('hidden');
+            return;
+        }
+
+        const tuttiIMarkers = {{ markers | tojson | safe }};
+        
+        // Cerca nell'array il marker con l'ID richiesto
+        const trovato = tuttiIMarkers.find(m =>
+            m.nome && String(m.nome).toLowerCase() === inputNome.toLowerCase()
+        );
+
+        if (trovato) {
+
+            accendiTarget(trovato.id, trovato.nome, trovato.zona);
+
+        } else {
+            // Se non lo trova, mostra un avviso rosso
+            resultDiv.innerHTML = `
+                <div class="bg-red-900 border-l-4 border-red-500 text-red-100 p-4 rounded shadow-inner">
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">❌</span>
+                        <div>
+                            <h3 class="font-bold text-lg">Non trovato</h3>
+                            <p class="text-md mt-1">Il marker ID ${inputNome} non è stato rilevato nell'ultima scansione. l'item potrebbe non essere presente oppure il marker non è ben visibile.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            let datiForm = new FormData();
+            datiForm.append('id_marker', "-1");
+
+            fetch('/cerca_oggetto', {
+                method: 'POST',
+                body: datiForm
+            }).catch(errore => {
+                console.error("Errore di comunicazione col server:", errore);
+            });
+
+        }
+        resultDiv.classList.remove('hidden');
+    }
+    
+    function prelevaOggetto(id, nome) {
+        let btn = document.getElementById(`btn-preleva-${id}`);
+        btn.innerText = "⏳ Registro...";
+        btn.disabled = true;
+
+        let datiForm = new FormData();
+        datiForm.append('id_marker', id);
+        datiForm.append('nome_marker', nome);
+
+        fetch('/preleva_oggetto', { method: 'POST', body: datiForm })
+        .then(response => {
+            if(response.ok) {
+                btn.innerText = "✅ Registrato!";
+                btn.classList.replace('bg-blue-600', 'bg-green-600');
+                btn.classList.replace('hover:bg-blue-500', 'hover:bg-green-500');
+            }
+        });
+    }
+    
+    
+</script>
+</body>
+</html>

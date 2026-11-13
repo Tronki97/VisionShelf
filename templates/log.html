@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Prelievi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-4 md:p-8 font-sans">
+    <div class="max-w-5xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <h1 class="text-3xl font-bold text-blue-400 text-center md:text-left">Log prelievi</h1>
+            <div class="flex flex-wrap justify-center gap-3">
+                <a href="/" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm md:text-base text-center">
+                    Area scansione
+                </a>
+                <a href="/gestione" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm md:text-base text-center">
+                    Gestione Item
+                </a>
+                <a href="/markers" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm md:text-base text-center">
+                    Elenco Item
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg shadow-lg overflow-x-auto border border-gray-700">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-700 text-gray-300">
+                        <th class="p-4 border-b border-gray-600">ID</th>
+                        <th class="p-4 border-b border-gray-600">Oggetto</th>
+                        <th class="p-4 border-b border-gray-600">Data Prelievo</th>
+                        <th class="p-4 border-b border-gray-600">Restituzione</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="border-b border-gray-700 hover:bg-gray-750 transition-colors">
+                        <td class="p-4 font-mono text-gray-400">#{{ log.id }}</td>
+                        <td class="p-4 font-bold text-lg">{{ log.nome }}</td>
+                        <td class="p-4 text-blue-300">{{ log.data_prelievo }}</td>
+                        <td class="p-4">
+                            {% if log.data_restituzione %}
+                                <span class="text-green-400 font-bold">✅ {{ log.data_restituzione }}</span>
+                            {% else %}
+                                <span class="text-yellow-500 font-bold animate-pulse">⏳ Fuori scaffale</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-gray-500">Nessun oggetto prelevato di recente.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

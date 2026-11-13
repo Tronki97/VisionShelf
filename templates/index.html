@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisionShelf Dashboard</title>
+    <!-- Caricamento di Tailwind CSS per il design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 h-screen w-full overflow-hidden flex flex-col md:flex-row">
+
+    <!-- SIDEBAR (Sinistra) -->
+    <aside class="w-full md:w-80 bg-gray-800 border-b md:border-b-0 md:border-r border-gray-700 flex flex-col h-auto md:h-full z-10 shrink-0">
+        
+        <div class="p-6 border-b border-gray-700 flex items-center gap-3">
+            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16M4 4v16m16-16v16"></path>
+            </svg>
+            <h1 class="text-xl font-bold tracking-wide">VisionShelf</h1>
+        </div>
+
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-8">
+            <!-- sezione oggetti Rilevati -->
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Oggetti Rilevati</h2>
+                    <span class="bg-blue-600 text-xs px-2 py-1 rounded-full font-medium" id="marker-count"></span>
+                </div>
+                <ul class="space-y-3" id="marker-list">
+                    <li class="bg-gray-750 border border-gray-700 rounded-lg p-3 flex items-center justify-between hover:bg-gray-700 transition-colors">
+			            <button onclick="avviaTelecamera()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg mb-6 shadow-lg transition-colors">
+    				        📸 Avvia Scansione
+			            </button>	
+		            </li>
+                    <li>
+                        <a href="/markers" class="block text-center mt-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors">
+                            📄 Apri elenco Items
+                        </a>
+                    </li>
+                </ul>
+           		<div id="lista-marker" class="space-y-3 mt-4">
+    	    		<p class="text-gray-400 text-sm">Fai una scansione per vedere i risultati.</p>
+		        </div>
+            </section>
+        </div>
+    </aside>
+
+    <!-- zona principale-->
+    <main class="flex-1 flex flex-col h-full bg-gray-950 p-4 md:p-6 overflow-hidden">
+        
+        <!-- Intestazione main -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-200">Feed Cam</h2>
+        </div>
+
+        <!-- Camera Container -->
+        <div class="relative flex-1 bg-black rounded-2xl border border-gray-800 overflow-hidden flex items-center justify-center shadow-2xl group">
+            
+            <img id="camera-feed" src="/video_feed" alt="Camera Feed" class="w-full h-full object-contain opacity-70 transition-opacity duration-300 group-hover:opacity-100">            
+        </div>
+    </main>
+
+    <script>
+
+    const intervalloMinuti = {{ intervallo | default(5) }};
+    const intervalloMs = intervalloMinuti * 60000;
+
+    if (intervalloMs > 0) {
+        setInterval(() => {
+            avviaTelecamera();
+            console.log("scansione automatica effettuata dopo " + intervalloMs/1000 + "secondi")
+        }, intervalloMs);
+    }
+	
+	function avviaTelecamera() {
+		const btn = document.querySelector('button[onclick="avviaTelecamera()"]');
+		const testoOriginale = btn.innerHTML;
+		btn.innerHTML = "⏳ Scansione in corso...";
+		btn.disabled = true;		
+
+        	fetch('/start_camera', { method: 'POST' })
+        	.then(response => response.json())
+        	.then(data => {
+			if(data.status === 'success') {
+      				setTimeout(() => {
+                			const camFeed = document.getElementById('camera-feed');
+                			if (camFeed) camFeed.src = "/video_feed?t=" + new Date().getTime();
+            			}, 800);
+
+            			//creazione div
+            			const contenitore = document.getElementById('lista-marker');
+            			contenitore.innerHTML = ''; // Svuota i vecchi risultati
+
+            			if (data.markers && data.markers.length > 0) {
+                            const itemRilevati = document.getElementById('marker-count');                            
+                            itemRilevati.innerText = data.markers.length;                        
+                			data.markers.forEach(marker => {
+                    				const div = document.createElement('div');
+                    				// Stile del riquadro (puoi usare i colori Tailwind che preferisci)
+                    				div.className = "bg-gray-700 p-3 rounded-lg flex justify-between items-center shadow border-l-4 border-blue-500";
+                    				div.innerHTML = `
+                        				<div>
+                            					<span class="font-bold text-blue-400">Marker ID: ${marker.id}</span>
+                            					<p class="text-sm text-gray-300">Posizione: <strong>${marker.zona}</strong></p>
+                        				</div>
+                        				<div class="text-xs text-gray-400 text-right">
+                            					X: ${marker.x}<br>Y: ${marker.y}
+                        				</div>
+                    				`;
+                   				contenitore.appendChild(div);
+                			});
+            			} else {
+                			contenitore.innerHTML = '<p class="text-gray-400 text-sm italic">Nessun marker trovato in questa scansione.</p>';
+            			}
+        		} else {
+            			alert("Errore: " + data.message);
+        		}
+    		})
+        	.catch(error => console.error('Errore:', error))
+		.finally(()=> {
+			btn.innerHTML = testoOriginale;
+			btn.disabled = false;
+		});
+    }
+
+    </script>
+</body>
+</html>
