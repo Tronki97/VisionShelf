@@ -109,13 +109,14 @@
                 if (data.status === "success") {
                     alert("Tutti i nomi sono stati salvati in un colpo solo!");
                 } else {
-                    alert("⚠rrore del server.");
+                    alert("errore del server.");
                 }
             })
             .catch(error => {
-                alert("rrore di connessione.");
+                alert("errore di connessione.");
                 console.error(error);
             });
+            salvaIntervallo();
         }
         function salvaIP() {
             const nuovoIP = document.getElementById('ip-esp32').value;
@@ -151,7 +152,7 @@
                 if (data.status === "success") {
                     alert("Intervallo di scansione aggiornato!");
                 } else {
-                    alert("rrore durante il salvataggio.");
+                    alert("errore: inserisci un valore (in minuti) valido");
                 }
             });
         }

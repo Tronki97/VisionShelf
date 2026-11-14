@@ -5,7 +5,6 @@ import os
 import math
 from datetime import datetime
 
-# 1. PERCORSI ASSOLUTI: Il sistema saprà sempre esattamente dove salvare i file
 DIR_BASE = os.path.dirname(os.path.abspath(__file__))
 image_path = os.path.join(DIR_BASE, "test_foto.jpg")
 output_path = os.path.join(DIR_BASE, "risultato_aruco.jpg")
@@ -99,8 +98,8 @@ try:
                     "y": cY
                 })
                 id_oggetti.append(id_corrente)
-                cv2.putText(frame, f"Obj {id_corrente}", (cX - 40, cY - 10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                cv2.putText(frame, f"{id_corrente}", (cX - 40, cY - 10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 0, 0), 2)
 
         # Per ogni oggetto, trova il LED più vicino fisicamente nella foto
         for obj in oggetti:
