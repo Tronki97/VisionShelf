@@ -142,7 +142,7 @@ void loop() {
     }
     String risposta = String(bufferDiRicezione);
     
-    // Se è il messaggio giusto, smette di urlare!
+    // Se è il messaggio giusto, smette
     if (risposta == "ACK_VISIONSHELF") {
       connesso = true;
       Serial.println("Conferma ricevuta dal Raspberry!");
