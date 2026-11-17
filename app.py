@@ -83,7 +83,6 @@ def video_feed():
 @app.route('/start_camera', methods=['POST'])
 def start_camera():
     try:
-        # Popen lancia lo script in background senza bloccare il server web
         subprocess.run([sys.executable, "cam.py"], check = True)
         markers = []
         if os.path.exists("markers.json"):
@@ -222,7 +221,6 @@ def salva_nome():
 @app.route('/salva_tutti_nomi', methods=['POST'])
 def salva_tutti_nomi():
     try:
-        # Riceve l'intero dizionario dal browser { "1": "Viti", "2": "Cavi" }
         nuovi_nomi = request.get_json()
         salva_nomi(nuovi_nomi)
         return {"status": "success"}
@@ -317,7 +315,7 @@ try:
     tasto_power = Button(3, hold_time=2)
 except Exception as e:
     print(f"Attenzione: Impossibile configurare i GPIO ({e})")
-    led_stato = None
+    led_stato = None 
     tasto_power = None
 
 if tasto_power:
